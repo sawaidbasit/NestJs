@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './app.controller';
-import { AuthService } from './app.service';
+import { AppService } from './app.service';
 
 describe('AuthController', () => {
   let authController: AuthController;
-  let authService: AuthService;
+  let appService: AppService;
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         {
-          provide: AuthService,
+          provide: AppService,
           useValue: {
             signup: jest.fn().mockReturnValue({ message: 'User registered' }),
             login: jest.fn().mockReturnValue({ token: 'fake-jwt-token' }),
@@ -21,7 +21,7 @@ describe('AuthController', () => {
     }).compile();
 
     authController = app.get<AuthController>(AuthController);
-    authService = app.get<AuthService>(AuthService);
+    appService = app.get<AppService>(AppService);
   });
 
   describe('signup', () => {
