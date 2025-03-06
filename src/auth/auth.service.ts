@@ -26,7 +26,6 @@ export class AuthService {
     }
 
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
-
     if (existingUser) {
       throw new BadRequestException('Email already registered');
     }
@@ -38,22 +37,18 @@ export class AuthService {
       data: { name, email, password: hashedPassword, otp, isVerified: false },
     });
 
-    await this.emailService.sendOtpEmail(email, otp);  // Calling EmailService
-
+    await this.emailService.sendOtpEmail(email, otp);
     return { message: 'OTP sent to your email. Please verify your account.' };
   }
 
   async verifyEmail(email: string, otp: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
-
     if (!user) {
       throw new BadRequestException('User not found');
     }
-
     if (user.isVerified) {
       throw new BadRequestException('User already verified');
     }
-
     if (user.otp !== otp) {
       throw new BadRequestException('Invalid OTP');
     }
@@ -62,8 +57,6 @@ export class AuthService {
       where: { email },
       data: { isVerified: true, otp: null },
     });
-
-    await this.emailService.sendOtpEmail(email, otp);
 
     return { message: 'Email verified successfully!' };
   }
@@ -95,7 +88,6 @@ export class AuthService {
     if (!email) {
       throw new BadRequestException('Email is required');
     }
-
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -111,34 +103,25 @@ export class AuthService {
       data: { resetPasswordToken: hashedToken, resetPasswordExpires: expiryDate },
     });
 
-    // Send reset email
     const resetLink = `http://localhost:3000/reset-password?token=${resetToken}&email=${email}`;
     await this.emailService.sendResetPasswordEmail(email, resetLink);
-
     return { message: 'Password reset link sent to your email.' };
   }
 
   async resetPassword(email: string, token: string, newPassword: string) {
-    if (!email || !token || !newPassword) {
-      throw new BadRequestException('All fields are required');
-    }
-
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || !user.resetPasswordToken || !user.resetPasswordExpires) {
       throw new NotFoundException('Invalid or expired reset token');
     }
-
     if (new Date() > user.resetPasswordExpires) {
       throw new BadRequestException('Reset token has expired');
     }
-
     const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
     if (!isTokenValid) {
       throw new BadRequestException('Invalid reset token');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
     await this.prisma.user.update({
       where: { email },
       data: { password: hashedPassword, resetPasswordToken: null, resetPasswordExpires: null },
