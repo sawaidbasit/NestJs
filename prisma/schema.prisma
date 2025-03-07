@@ -30,6 +30,7 @@ model User {
   password  String
   isVerified Boolean @default(false)
   otp       String? 
+  otpCreatedAt DateTime? 
   createdAt DateTime @default(now())
   resetPasswordToken   String? 
   resetPasswordExpires DateTime? 
