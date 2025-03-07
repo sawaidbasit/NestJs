@@ -36,6 +36,16 @@ model User {
   resetPasswordExpires DateTime? 
 }
 
+model ImageAnalysis {
+  id               String   @id @default(uuid())
+  mainObject       String   // e.g., "Table", "Car", "Market"
+  material         String?  // Optional (e.g., "Wood", "Metal")
+  quality          String?  // Optional (e.g., "Premium", "Standard")
+  notableItems     String[] // List of detected items
+  sceneDescription String   // Brief description of the scene
+  createdAt        DateTime @default(now())
+}
+
 
 model Material {
   id        String  @id @default(uuid())

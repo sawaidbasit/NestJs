@@ -15,4 +15,11 @@ export class AuthController {
   login(@Body() body) {
     return this.authService.login(body.email, body.password); // ✅ Correct Call
   }
+
+}
+@Controller('openai')
+export class OpenAiController {
+  constructor(private authService: AuthService) {} // ✅ Use AuthService
+
+  
 }
