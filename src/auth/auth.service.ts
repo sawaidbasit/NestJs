@@ -1,11 +1,9 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
-import { randomInt } from 'crypto';
 import { EmailService } from '../email/email.service';
-import { randomBytes } from 'crypto';
 import { Cron, CronExpression } from '@nestjs/schedule';
-
+import { randomInt, randomBytes } from 'node:crypto';
 
 @Injectable()
 export class AuthService {
