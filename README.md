@@ -24,6 +24,8 @@
 ## deployed project url
 https://nestjs-production-8ce6.up.railway.app
 
+## Image analyze api not working
+https://nestjs-production-8ce6.up.railway.app/openai/analyze
 
 ## Description
 
