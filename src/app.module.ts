@@ -6,9 +6,10 @@ import { EmailModule } from './email/email.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { OpenAiModule } from './openai/openai.module';
 import { ImageAnalysisModule } from './image-analysis/image-analysis.module';
+import { OpenAiController } from './openai/openai.controller';
 
 @Module({
   imports: [AuthModule, OpenAiModule, ImageAnalysisModule ,PrismaModule, EmailModule, ScheduleModule.forRoot()],
-  controllers: [HomeController], 
+  controllers: [HomeController, OpenAiController], 
 })
 export class AppModule {}

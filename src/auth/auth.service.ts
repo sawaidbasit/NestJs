@@ -3,7 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { randomInt, randomBytes } from 'node:crypto';
+import * as randomstring from 'randomstring';
 
 @Injectable()
 export class AuthService {
@@ -29,10 +29,8 @@ export class AuthService {
         }
 
         const otpExpirationTime = new Date(user.otpCreatedAt.getTime() + 5 * 60 * 1000);
-        console.log(`🔍 Checking user: ${user.email} | OTP Expiration Time: ${otpExpirationTime.toISOString()}`);
 
         if (currentTime > otpExpirationTime) {
-            console.log(`⏳ OTP expired for user: ${user.email}, Removing OTP...`);
 
             await this.prisma.user.update({
                 where: { id: user.id },
@@ -42,7 +40,6 @@ export class AuthService {
                 },
             });
 
-            console.log(`✅ OTP removed for user: ${user.email}`);
         }
     }
 }
@@ -93,9 +90,9 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const otp = randomInt(100000, 999999).toString();
+    const otp = randomstring.generate({ length: 6, charset: 'numeric' });
+
     const otpCreatedAt = new Date();
-    console.log("Generated OTP:", otp, "Created At:", otpCreatedAt);
 
     await this.prisma.user.create({
         data: {
@@ -156,7 +153,6 @@ export class AuthService {
     }
 
     const user = await this.prisma.user.findUnique({ where: { email } });
-    console.log(user?.password)
     if (!user) {
       throw new BadRequestException('User does not exist');
     }
@@ -182,7 +178,8 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    const resetToken = randomBytes(32).toString('hex'); 
+    const resetToken = randomstring.generate({ length: 32, charset: 'alphanumeric' });
+ 
     const hashedToken = await bcrypt.hash(resetToken, 10);
     const expiryDate = new Date();
     expiryDate.setMinutes(expiryDate.getMinutes() + 1);
@@ -279,7 +276,8 @@ export class AuthService {
       throw new BadRequestException('User already verified');
     }
 
-    const newOtp = randomInt(100000, 999999).toString();
+    const newOtp = randomstring.generate({ length: 6, charset: 'numeric' });
+
 
     await this.prisma.user.update({
       where: { email },

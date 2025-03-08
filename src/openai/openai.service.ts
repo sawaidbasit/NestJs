@@ -53,7 +53,7 @@ export class OpenAiService {
           ],
         },
       ],
-      response_format: 'json',
+      response_format: { type: 'json_object' },
     };
   
     try {
@@ -65,32 +65,27 @@ export class OpenAiService {
         },
         body: JSON.stringify(payload),
       });
-  
-      // ✅ Debugging: Log response status
-      console.log('🔹 Response Status:', response.status);
-  
+    
       const responseData = await response.json();
-  
-      // ✅ Debugging: Log response data
-      console.log(
-        '🔹 OpenAI API Response:',
-        JSON.stringify(responseData, null, 2),
-      );
-  
+    
       if (!response.ok) {
-        console.error(`❌ OpenAI API request failed: ${response.statusText}`);
+        console.error(` OpenAI API request failed: ${response.statusText}`);
         throw new Error(`OpenAI API request failed: ${response.statusText}`);
       }
-  
-      // ✅ Save API response in the database
-      const savedData = await this.imageAnalysisService.saveAnalysisResult(responseData);
-  
-      // ✅ Debugging: Log saved database entry
-      console.log('✅ Data Saved in Database:', savedData);
-  
+    
+      const parsedData = JSON.parse(responseData.choices[0].message.content);
+    
+      const savedData = await this.imageAnalysisService.saveAnalysisResult({
+        mainObject: parsedData.mainObject || 'Unknown', 
+        material: parsedData.material || 'Unknown',
+        quality: parsedData.quality || 'Unknown',
+        notableItems: parsedData.notableItems || [],
+        sceneDescription: parsedData.sceneDescription || 'No description available',
+      });
+    
       return savedData;
     } catch (error) {
-      console.error('❌ Error while calling OpenAI API:', error);
+      console.error('Error while calling OpenAI API:', error);
       throw new Error('Error while calling OpenAI API.');
     }
   }
