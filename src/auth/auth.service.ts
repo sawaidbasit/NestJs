@@ -3,11 +3,21 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import * as randomstring from 'randomstring';
+// import * as randomstring from 'randomstring';
 
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name); 
+
+  private generateRandomString(length: number, charset: string): string {
+    const characters = charset;
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        result += characters[randomIndex];
+    }
+    return result;
+}
 
   constructor(private prisma: PrismaService, private emailService: EmailService) {}
   @Cron(CronExpression.EVERY_MINUTE)
@@ -90,7 +100,8 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const otp = randomstring.generate({ length: 6, charset: 'numeric' });
+    const otp = this.generateRandomString(6, '0123456789');
+    // const otp = randomstring.generate({ length: 6, charset: 'numeric' });
 
     const otpCreatedAt = new Date();
 
@@ -177,8 +188,9 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    const resetToken = this.generateRandomString(32, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
 
-    const resetToken = randomstring.generate({ length: 32, charset: 'alphanumeric' });
+    // const resetToken = randomstring.generate({ length: 32, charset: 'alphanumeric' });
  
     const hashedToken = await bcrypt.hash(resetToken, 10);
     const expiryDate = new Date();
@@ -276,8 +288,8 @@ export class AuthService {
       throw new BadRequestException('User already verified');
     }
 
-    const newOtp = randomstring.generate({ length: 6, charset: 'numeric' });
-
+    // const newOtp = randomstring.generate({ length: 6, charset: 'numeric' });
+    const newOtp = this.generateRandomString(6, '0123456789');
 
     await this.prisma.user.update({
       where: { email },
