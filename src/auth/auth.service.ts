@@ -74,7 +74,6 @@ export class AuthService {
         },
       });
   
-      console.log(`✅ Reset token removed for user ${user.email}`);
     }
   }
 

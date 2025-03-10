@@ -31,7 +31,6 @@ export class OpenAiService {
 
   async analyzeImage(imageBase64: string, email: string): Promise<any> {
     if (!this.API_KEY) {
-      console.error('❌ OpenAI API key is missing! Set it in the .env file.');
       throw new Error('OpenAI API key is missing! Set it in the .env file.');
     }
 
@@ -102,7 +101,6 @@ export class OpenAiService {
 
       const responseData = await response.json();
 
-      console.log("✅ OpenAI API Response:", JSON.stringify(responseData, null, 2));
 
       if (!response.ok) {
         console.error(`❌ OpenAI API request failed: ${response.statusText}`);
@@ -115,7 +113,6 @@ export class OpenAiService {
         !responseData.choices[0].message ||
         !responseData.choices[0].message.content
       ) {
-        console.error("❌ Unexpected OpenAI response format:", responseData);
         throw new Error("Unexpected OpenAI response format.");
       }
 
@@ -123,14 +120,10 @@ export class OpenAiService {
       try {
         parsedData = JSON.parse(responseData.choices[0].message.content);
       } catch (error) {
-        console.error("❌ Failed to parse OpenAI response:", error);
         throw new Error("Invalid JSON format from OpenAI response.");
       }
 
-      console.log("✅ Parsed Data from OpenAI:", parsedData);
-
       if (!parsedData.materials || !Array.isArray(parsedData.materials)) {
-        console.error("❌ No materials found in OpenAI response.");
         return { error: "No materials detected in the image." };
       }
 
@@ -149,11 +142,9 @@ export class OpenAiService {
         })
       );
 
-      console.log("✅ Saved Data in DB:", savedData);
       return savedData;
 
     } catch (error) {
-      console.error("❌ Error while calling OpenAI API:", error);
       throw new Error("Error while calling OpenAI API.");
     }
   }
