@@ -43,8 +43,8 @@ async function bootstrap() {
   app.use(bodyParser.json({ limit: '10mb' }));
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
-  // Use the port assigned by Railway (process.env.PORT), otherwise default to 3000
   const port = process.env.PORT || 3000;
   await app.listen(port);
 }
 bootstrap();
+

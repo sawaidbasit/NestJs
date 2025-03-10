@@ -44,6 +44,7 @@ export class OpenAiController {
     }
   }
 
+   // ✅ New GET API to fetch analysis results by email
    @Get('analysis')
    async getAnalysis(@Query('email') email: string) {
      if (!email) {
@@ -52,5 +53,6 @@ export class OpenAiController {
  
      return this.openAiService.getAnalysisByEmail(email);
    }
+
 
 }

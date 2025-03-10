@@ -7,9 +7,21 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { OpenAiModule } from './openai/openai.module';
 import { ImageAnalysisModule } from './image-analysis/image-analysis.module';
 import { OpenAiController } from './openai/openai.controller';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
-  imports: [AuthModule, OpenAiModule, ImageAnalysisModule ,PrismaModule, EmailModule, ScheduleModule.forRoot()],
-  controllers: [HomeController, OpenAiController], 
+  imports: [
+    AuthModule,
+    OpenAiModule,
+    ImageAnalysisModule,
+    PrismaModule,
+    EmailModule,
+    ScheduleModule.forRoot(),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'client'),
+    }),
+  ],
+  controllers: [HomeController, OpenAiController],
 })
 export class AppModule {}

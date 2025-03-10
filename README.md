@@ -24,8 +24,14 @@
 ## deployed project url
 https://nestjs-production-8ce6.up.railway.app
 
-## Image analyze api not working
+## Image analyze api
 https://nestjs-production-8ce6.up.railway.app/openai/analyze
+body:{
+  {
+    "email":"newiui@yopmail.com",
+    "imageBase64":"base64 image"
+}
+}
 
 ## Description
 

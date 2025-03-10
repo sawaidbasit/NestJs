@@ -6,9 +6,8 @@ import { Prisma } from '@prisma/client';
 export class ImageAnalysisService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Save analysis result for a user
+  // ✅ Add the function here
   async saveAnalysisResult(data: any) {
-
     if (!data.email) {
       throw new HttpException('Email is required!', HttpStatus.BAD_REQUEST);
     }
@@ -23,19 +22,30 @@ export class ImageAnalysisService {
     }
 
     try {
+      // 1️⃣ Save image analysis
       const analysisResult = await this.prisma.imageAnalysis.create({
         data: {
           userId: user.id,
-          materialName: data.materialName,
-          type: data.type,
-          properties: data.properties ?? null,
-          origin: data.origin ?? null,
-          uses: Array.isArray(data.uses) ? data.uses : [],
           imageUrl: data.imageUrl || "",
           description: data.description ?? "No description available",
           createdAt: new Date(),
         },
       });
+
+      // 2️⃣ Save materials separately
+      if (Array.isArray(data.materials) && data.materials.length > 0) {
+        const materialsData = data.materials.map((material) => ({
+          materialName: material.materialName,
+          materialType: material.materialType,
+          materialProperties: JSON.stringify(material.materialProperties || []),
+          materialOrigin: material.materialOrigin || "Unknown",
+          uses: JSON.stringify(material.uses || []),
+          materialImage: material.materialImage || "",
+          imageAnalysisId: analysisResult.id, // Linking to ImageAnalysis
+        }));
+
+        await this.prisma.material.createMany({ data: materialsData });
+      }
 
       return analysisResult;
 

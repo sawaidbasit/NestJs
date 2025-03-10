@@ -22,25 +22,25 @@ model User {
 }
 
 model ImageAnalysis {
-  id           String   @id @default(uuid())
-  createdAt    DateTime @default(now())
-  imageUrl     String?
-  materialName String
-  origin       String?
-  properties   String?
-  type         String
-  uses         Json
-  description  String
-  userId       String
-  user         User     @relation("UserToImageAnalysis", fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  imageUrl    String?
+  materials   Material[] @relation("ImageAnalysisToMaterial")  // Establishing relation with Material tableN
+  description String
+  userId      String
+  user        User     @relation("UserToImageAnalysis", fields: [userId], references: [id], onDelete: Cascade)
 }
 
 
+
 model Material {
-  id          String   @id @default(uuid())
-  name        String
-  category    String
-  description String?
-  imageUrl    String?
-  createdAt   DateTime @default(now())
+  id                String    @id @default(uuid())
+  materialName      String
+  materialType      String
+  materialProperties String[]  // Array of strings
+  materialOrigins   String[]  // Array of strings
+  usesOfMaterial    String[]  // Array of strings
+  materialImage     String?  // Optional, can be null
+  imageAnalysisId   String
+  imageAnalysis     ImageAnalysis @relation("ImageAnalysisToMaterial", fields: [imageAnalysisId], references: [id], onDelete: Cascade)
 }
