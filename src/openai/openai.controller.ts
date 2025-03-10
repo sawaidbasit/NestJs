@@ -43,4 +43,14 @@ export class OpenAiController {
       };
     }
   }
+
+   @Get('analysis')
+   async getAnalysis(@Query('email') email: string) {
+     if (!email) {
+       return { error: 'Email is required' };
+     }
+ 
+     return this.openAiService.getAnalysisByEmail(email);
+   }
+
 }
