@@ -3,6 +3,8 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Request } from 'express'; // ✅ Import Express Request
+
 // import * as randomstring from 'randomstring';
 
 @Injectable()
@@ -205,28 +207,33 @@ export class AuthService {
   }
 
   async resetPassword(email: string, token: string, newPassword: string) {
+    if (!email || !token) {
+      throw new BadRequestException('Email and token are required');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || !user.resetPasswordToken || !user.resetPasswordExpires) {
       throw new NotFoundException('Invalid or expired reset token.');
     }
-  
+
     if (new Date() > user.resetPasswordExpires) {
       throw new BadRequestException('Reset token has expired.');
     }
-  
+
     const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
     if (!isTokenValid) {
       throw new BadRequestException('Invalid reset token.');
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);  
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.prisma.user.update({
       where: { email },
       data: { password: hashedPassword, resetPasswordToken: null, resetPasswordExpires: null },
     });
-  
+
     return { message: 'Password reset successful. You can now log in.' };
   }
+  
   
   async verifyResetToken(email: string, token: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });

@@ -1,5 +1,7 @@
-import { Controller, Post, Get, Body, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { Request } from 'express'; // ✅ Import Express Request
+
 
 @Controller('auth')
 export class AuthController {
@@ -27,11 +29,14 @@ export class AuthController {
 
   @Post('reset-password')
   async resetPassword(
-    @Body('email') email: string,
-    @Body('token') token: string,
+    @Req() request: Request, // ✅ Use Express Request
     @Body('newPassword') newPassword: string
   ) {
-      return this.authService.resetPassword(email, token, newPassword);
+    // ✅ Explicitly cast query params
+    const email = request.query['email'] as string;
+    const token = request.query['token'] as string;
+
+    return this.authService.resetPassword(email, token, newPassword);
   }
 
 
