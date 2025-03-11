@@ -33,6 +33,9 @@ body:{
 }
 }
 
+## reset-password api update
+After using the forgot-password API, a link is sent to the email. Clicking the link redirects to the reset-password API, where the user enters a new password in the newPassword field.
+
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
