@@ -54,4 +54,5 @@ export class ImageAnalysisService {
       throw new HttpException('Error saving analysis result.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+  
 }

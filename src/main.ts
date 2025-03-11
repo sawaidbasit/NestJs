@@ -26,6 +26,8 @@ import * as dotenv from 'dotenv';
 import * as cors from 'cors';
 import { webcrypto } from 'crypto';
 import * as bodyParser from 'body-parser';
+import * as express from 'express';
+import { join } from 'path';
 
 Object.defineProperty(globalThis, 'crypto', {
   value: webcrypto,
@@ -43,8 +45,13 @@ async function bootstrap() {
   app.use(bodyParser.json({ limit: '10mb' }));
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
+  // ✅ Serve Static Images from 'public/images'
+  app.use('/images', express.static(join(__dirname, '..', 'public/images')));
+
   const port = process.env.PORT || 3000;
   await app.listen(port);
+  console.log(`🚀 Server running at http://localhost:${port}`);
 }
 bootstrap();
+
 

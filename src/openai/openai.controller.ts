@@ -7,15 +7,14 @@ import { Prisma } from '@prisma/client';
 export class OpenAiController {
   constructor(
     private readonly openAiService: OpenAiService, 
-    private readonly prisma: PrismaService) {}
-
+    private readonly prisma: PrismaService
+  ) {}
 
   @Post('analyze')
   async analyzeImage(
     @Body('imageBase64') imageBase64: string,
     @Body('email') email: string,
   ) {
-
     const user = await this.prisma.user.findUnique({
       where: { email: email },
     });
@@ -44,15 +43,14 @@ export class OpenAiController {
     }
   }
 
-   // ✅ New GET API to fetch analysis results by email
-   @Get('analysis')
-   async getAnalysis(@Query('email') email: string) {
-     if (!email) {
-       return { error: 'Email is required' };
-     }
- 
-     return this.openAiService.getAnalysisByEmail(email);
-   }
+  // ✅ New GET API to fetch analysis results by email
+  @Get('analysis')
+  async getAnalysis(@Query('email') email: string) {
+    if (!email) {
+      return { error: 'Email is required' };
+    }
 
+    return this.openAiService.getAnalysisByEmail(email);
+  }
 
 }
