@@ -26,7 +26,6 @@ model ImageAnalysis {
   createdAt   DateTime @default(now())
   imageUrl    String?
   materials   Material[] @relation("ImageAnalysisToMaterial")  // Establishing relation with Material tableN
-  description String
   userId      String
   user        User     @relation("UserToImageAnalysis", fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -41,6 +40,7 @@ model Material {
   materialOrigins   String[]  // Array of strings
   usesOfMaterial    String[]  // Array of strings
   materialImage     String?  // Optional, can be null
+  description String @default("No description available")
   imageAnalysisId   String
   imageAnalysis     ImageAnalysis @relation("ImageAnalysisToMaterial", fields: [imageAnalysisId], references: [id], onDelete: Cascade)
 }

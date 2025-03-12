@@ -50,37 +50,47 @@ export class OpenAiService {
       messages: [
         {
           role: 'system',
-          content: `You are an AI assistant that analyzes images and detects materials used in them.
-          Given an image, analyze the materials present and return a structured JSON object.
-
-          **Response Format:**
-          {
-            "description": "Brief description of the image and materials present",
-            "materials": [
-              {
-                "materialName": "Granite",
-                "materialDescription": "Granite is a natural stone known for its durability and elegance.",
-                "materialType": "Natural",
-                "materialProperties": ["Hard", "Scratch-resistant", "Heat-resistant"],
-                "materialOrigins": ["Brazil", "India", "China"],
-                "usesOfMaterial": ["Countertops", "Flooring", "Sculptures"],
-                "materialImage": "URL of the material image if available"
-              }
-            ]
-          }
-
-          **Instructions:**
-          - Identify all materials present in the image.
-          - Provide accurate material names, types, and descriptions.
-          - Include relevant material properties, origins, and common uses.
-          - Ensure the response is in **valid JSON format only**.`,
+          content: `You are an expert in material recognition for home construction, renovation, and interior design. 
+    Your task is to analyze images and provide structured data about **all detected materials**, including primary and secondary materials.
+    
+    ### **Return JSON in this format:**
+    {
+      "materials": [
+        {
+          "name": "Material Name",
+          "type": "Material Type",
+          "description": "A short but precise description of the material.",
+          "materialProperties": [
+            "Property 1",
+            "Property 2",
+            "Property 3"
+          ],
+          "materialOrigins": [
+            "Origin 1",
+            "Origin 2"
+          ],
+          "usesOfMaterial": [
+            "Usage 1",
+            "Usage 2",
+            "Usage 3"
+          ]
+        }
+      ]
+    }
+    
+    ### **Key Instructions:**
+    - Identify **all visible materials**, including flooring, cabinetry, countertops, walls, backsplashes, appliances, fixtures, and accessories.
+    - Include even **small details** like plastic handles, glass doors, rubber seals, or metal trims.
+    - Ensure **materialProperties** and **usesOfMaterial** contain at least three relevant entries.
+    - Provide **concise but meaningful descriptions** of each material.
+    - Do **not** group different materials together—each must be listed separately.`,
         },
         {
           role: 'user',
           content: [
             {
               type: 'text',
-              text: 'Analyze this image and provide structured JSON details about the materials used.',
+              text: 'Analyze this image and detect all materials used in it. Provide structured JSON output with details including name, type, description, material properties, origins, and common uses.',
             },
             {
               type: 'image_url',
@@ -93,7 +103,7 @@ export class OpenAiService {
       ],
       response_format: { type: 'json_object' },
     };
-
+    
     try {
       const response = await fetch(this.API_URL, {
         method: 'POST',
@@ -142,70 +152,70 @@ export class OpenAiService {
         return { error: 'User not found!' };
       }
 
-      // Save ImageAnalysis
-      const imageAnalysis = await this.prisma.imageAnalysis.create({
-        data: {
-          userId: user.id,
-          imageUrl: imageBase64,
-          description: parsedData.description || 'No description available',
-        },
-      });
-      console.log('imageAnalysisId:', imageAnalysis.id); // Should print a valid string
+     // Ensure imageAnalysis is declared and assigned before use
+const imageAnalysis = await this.prisma.imageAnalysis.create({
+  data: {
+    userId: user.id,
+    imageUrl: imageBase64
+  },
+});
 
-      // Save Materials
-      const materialPromises = parsedData.materials.map(
-        async (material, index) => {
-          console.log(`Processing material ${index + 1}:`, material);
+console.log(`✅ imageAnalysis created with ID: ${imageAnalysis.id}`);
 
-          // Generate image if not available
-          // Generate image if not available
-          let materialImage = material.materialImage?.trim() || null;
-          console.log(
-            `🔍 Checking image for: ${material.materialName} | Existing Image: ${materialImage}`,
-          );
+const materialPromises = parsedData.materials.map(async (material, index) => {
+  console.log(`🔍 Processing material ${index + 1}:`, material);
 
-          if (!materialImage) {
-            console.log(
-              `🚀 Generating new image for: ${material.materialName}...`,
-            );
-            materialImage = await this.generateMaterialImage(
-              material.materialName,
-              email,
-            );
-            console.log(`✅ Generated image URL: ${materialImage}`);
-          }
+  const materialName = material?.name?.trim() || 'Unknown';
+  const materialType = material?.type?.trim() || 'Unknown';
+  const materialDescription = material?.description?.trim() || 'No description available'; // ✅ Include description
+  const materialProperties = Array.isArray(material?.materialProperties) && material.materialProperties.length > 0
+  ? material.materialProperties
+  : ["Unknown"]; // Default value to prevent empty fields
+  const materialOrigins = Array.isArray(material?.materialOrigins) 
+    ? material.materialOrigins 
+    : [material?.materialOrigins || 'Unknown'];
 
-          return this.prisma.material.create({
-            data: {
-              imageAnalysisId: imageAnalysis.id,
-              materialName: material.materialName?.trim() || 'Unknown',
-              materialType: material.materialType?.trim() || 'Unknown',
-              materialProperties: Array.isArray(material.materialProperties)
-                ? material.materialProperties
-                : [],
-              materialOrigins: Array.isArray(material.materialOrigins)
-                ? material.materialOrigins
-                : [],
-              usesOfMaterial: Array.isArray(material.usesOfMaterial)
-                ? material.usesOfMaterial
-                : [],
-              materialImage, // Set generated or provided image URL
-            },
-          });
-        },
-      );
+    const usesOfMaterial = Array.isArray(material?.usesOfMaterial) && material.usesOfMaterial.length > 0
+    ? material.usesOfMaterial
+    : ["General Construction"]; // Default fallback
 
-      // Use Promise.allSettled() to capture both resolved & rejected promises
-      const materialResults = await Promise.allSettled(materialPromises);
 
-      // Logging errors if any material creation fails
-      materialResults.forEach((result, index) => {
-        if (result.status === 'rejected') {
-          console.error(`❌ Material ${index + 1} failed:`, result.reason);
-        }
-      });
+  let materialImage = material?.materialImage?.trim() || null;
+  if (!materialImage) {
+    console.log(`🚀 Generating new image for: ${materialName}...`);
+    materialImage = await this.generateMaterialImage(materialName, email, materialType);
+    console.log(`✅ Generated image URL: ${materialImage}`);
+  }
 
-      return { message: 'Image analysis and materials saved successfully!' };
+  return this.prisma.material.create({
+    data: {
+      imageAnalysisId: imageAnalysis.id,
+      materialName,  
+      materialType,
+      description: materialDescription, // ✅ Added description
+      materialProperties,
+      materialOrigins,
+      usesOfMaterial,
+      materialImage,
+    },
+  });
+});
+
+
+
+// Wait for all materials to be inserted
+const materialResults = await Promise.allSettled(materialPromises);
+
+materialResults.forEach((result, index) => {
+  if (result.status === 'rejected') {
+    console.error(`❌ Material ${index + 1} failed:`, result.reason);
+  } else {
+    console.log(`✅ Material ${index + 1} inserted successfully`);
+  }
+});
+
+      
+      return { message: 'Image analysis and materials saved successfully!', parsedData };
     } catch (error) {
       console.error('❌ Error while calling OpenAI API:', error);
       throw new Error('Error while calling OpenAI API.');
@@ -215,24 +225,33 @@ export class OpenAiService {
   async generateMaterialImage(
     materialName: string,
     email: string,
+    materialType: string
   ): Promise<string | null> {
     try {
       const appUrl = process.env.APP_URL;
-      console.log(`🟢 Generating image for: ${materialName}`);
 
       const requestBody = {
         model: 'dall-e-3',
-        prompt: `A high-resolution, seamless texture of ${materialName}. The entire image should be completely covered with the material, 
-            without any borders, background, shadows, or extra elements. The texture should be evenly lit, photorealistic, 
-            and perfectly tiled to blend smoothly for construction and interior design projects.`,
-        n: 1,
-        size: '1024x1024',
-      };
+        // prompt: `A **completely flat, seamless, tileable texture sample** of '${materialName}' material.  
+        // - 🚫 **No spheres, no cubes, no 3D objects, no perspective, no depth.**  
+        // - 🎨 The material **fills the entire image edge-to-edge, with no empty space, no background, and no borders.**  
+        // - 🔍 The texture is **high-resolution and photorealistic,** suitable for **architecture, 3D modeling, and material libraries.**  
+        // - ☀️ **No shadows, no lighting effects, no reflections.** The texture should be evenly lit, as if **scanned from a real-world sample.**  
+        // - 📏 **100% tileable and seamless**, allowing for smooth repetition in architectural and 3D design applications.  
+        // - 🏗️ Example materials: 'wood veneer, marble slab, porcelain tile, granite countertop, concrete, laminate, or fabric.'`,
+        // n: 1,
+        // size: '1024x1024'
+        "prompt": `create Hardwood ${materialName} ${materialType} material texture rectungular image no layers, single plain texture, looks real`,
+        "n": 1,
+        "quality": "hd",
+        "size": "1024x1024"
+    };
+                
 
-      console.log(
-        `📤 Sending request to OpenAI:`,
-        JSON.stringify(requestBody, null, 2),
-      );
+      // console.log(
+      //   `📤 Sending request to OpenAI:`,
+      //   JSON.stringify(requestBody, null, 2),
+      // );
 
       const dalleResponse = await fetch(
         'https://api.openai.com/v1/images/generations',
@@ -246,9 +265,9 @@ export class OpenAiService {
         },
       );
 
-      console.log(`🔄 Waiting for OpenAI response...`);
+      // console.log(`🔄 Waiting for OpenAI response...`);
       const dalleData = await dalleResponse.json();
-      console.log(`📸 DALL·E Response:`, JSON.stringify(dalleData, null, 2));
+      // console.log(`📸 DALL·E Response:`, JSON.stringify(dalleData, null, 2));
 
       if (!dalleResponse.ok || !dalleData.data || dalleData.data.length === 0) {
         console.error(`❌ No image generated for ${materialName}`);
@@ -263,7 +282,7 @@ export class OpenAiService {
        }
        
       const imageUrl = dalleData.data[0].url;
-      console.log(`✅ OpenAI Image URL: ${imageUrl}`);
+      // console.log(`✅ OpenAI Image URL: ${imageUrl}`);
 
       // ✅ Generate a Single Timestamp Before Calling saveImageToLocalServer
       const timestamp = Date.now();
@@ -281,8 +300,8 @@ export class OpenAiService {
       }
 
       // ✅ Use the same timestamp for database storage
-     const newImageUrl = `${appUrl}/images/${user?.id}/${timestamp}_${materialName}.png`;
-     console.log(`✅ Stored Image URL: ${newImageUrl}`);
+     const newImageUrl = `${appUrl}/images/${timestamp}_${materialName}.png`;
+    //  console.log(`✅ Stored Image URL: ${newImageUrl}`);
 
       return newImageUrl;
     } catch (error) {
@@ -312,15 +331,15 @@ export class OpenAiService {
       }
 
       // ✅ Use the provided timestamp
-      const userDir = path.join(__dirname, `../../public/images/${user.id}`);
+      const userDir = path.join(__dirname, `../../public/images/`);
       const imagePath = path.join(userDir, `${timestamp}_${materialName}.png`);
 
       if (!fs.existsSync(userDir)) {
         fs.mkdirSync(userDir, { recursive: true });
-        console.log(`📁 Created missing directory: ${userDir}`);
+        // console.log(`📁 Created missing directory: ${userDir}`);
       }
 
-      console.log(`⬇️ Downloading image to: ${imagePath}`);
+      // console.log(`⬇️ Downloading image to: ${imagePath}`);
 
       const writer = fs.createWriteStream(imagePath);
       const response = await axios({
@@ -333,7 +352,7 @@ export class OpenAiService {
 
       return new Promise((resolve, reject) => {
         writer.on('finish', () => {
-          console.log(`✅ Image saved successfully: ${imagePath}`);
+          // console.log(`✅ Image saved successfully: ${imagePath}`);
           resolve(imagePath);
         });
         writer.on('error', (err) => {

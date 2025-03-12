@@ -27,7 +27,6 @@ export class ImageAnalysisService {
         data: {
           userId: user.id,
           imageUrl: data.imageUrl || "",
-          description: data.description ?? "No description available",
           createdAt: new Date(),
         },
       });
@@ -36,6 +35,7 @@ export class ImageAnalysisService {
       if (Array.isArray(data.materials) && data.materials.length > 0) {
         const materialsData = data.materials.map((material) => ({
           materialName: material.materialName,
+          description: data.description ?? "No description available",
           materialType: material.materialType,
           materialProperties: JSON.stringify(material.materialProperties || []),
           materialOrigin: material.materialOrigin || "Unknown",
