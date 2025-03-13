@@ -9,9 +9,11 @@ import { ImageAnalysisModule } from './image-analysis/image-analysis.module';
 import { OpenAiController } from './openai/openai.controller';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { HomeModule } from './home/home.module';
 
 @Module({
   imports: [
+    HomeModule,
     AuthModule,
     OpenAiModule,
     ImageAnalysisModule,

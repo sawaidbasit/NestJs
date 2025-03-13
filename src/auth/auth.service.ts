@@ -207,33 +207,40 @@ export class AuthService {
   }
 
   async resetPassword(email: string, token: string, newPassword: string) {
-    if (!email || !token) {
-      throw new BadRequestException('Email and token are required');
-    }
 
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user || !user.resetPasswordToken || !user.resetPasswordExpires) {
-      throw new NotFoundException('Invalid or expired reset token.');
+    if (!user) {
+      throw new BadRequestException('User not found');
     }
 
-    if (new Date() > user.resetPasswordExpires) {
-      throw new BadRequestException('Reset token has expired.');
+    if (!user.resetPasswordToken) {
+      throw new BadRequestException('Invalid reset token');
     }
 
     const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
     if (!isTokenValid) {
-      throw new BadRequestException('Invalid reset token.');
+      throw new BadRequestException('Invalid reset token');
+    }
+
+    const currentTime = new Date();
+
+    if (!user.resetPasswordExpires || new Date(user.resetPasswordExpires) < currentTime) {
+      console.error('❌ Reset token expired');
+      throw new BadRequestException('Reset token expired');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.prisma.user.update({
       where: { email },
-      data: { password: hashedPassword, resetPasswordToken: null, resetPasswordExpires: null },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null,
+      },
     });
 
-    return { message: 'Password reset successful. You can now log in.' };
-  }
-  
+    return { message: 'Password reset successful' };
+}
   
   async verifyResetToken(email: string, token: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
@@ -305,6 +312,14 @@ export class AuthService {
     await this.emailService.sendOtpEmail(email, newOtp);
 
     return { message: 'New OTP sent to your email.' };
+}
+
+async saveAppleUser(name: string, email: string, appleId: string) {
+  return this.prisma.user.upsert({
+    where: { email },
+    update: { name, appleId },
+    create: { name, email, appleId, password: null, isVerified: true },
+  });
 }
 
   private isValidEmail(email: string): boolean {

@@ -11,10 +11,11 @@ model User {
   id                   String    @id @default(uuid())
   name                 String
   email                String    @unique
-  password             String
+  password             String?
   createdAt            DateTime  @default(now())
   isVerified           Boolean   @default(false)
   otp                  String?
+  appleId              String? @unique
   resetPasswordExpires DateTime?
   resetPasswordToken   String?
   otpCreatedAt         DateTime?

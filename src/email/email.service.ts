@@ -23,7 +23,7 @@ export class EmailService {
     async sendResetPasswordEmail(email: string, resetToken: string) {
       const appUrl = process.env.APP_URL || 'http://localhost:3000';
     
-      const resetLink = `${appUrl}/auth/reset-password?token=${resetToken}&email=${email}`;
+      const resetLink = `${appUrl}/auth/reset-password-form?token=${resetToken}&email=${email}`;
     
       await this.mailerService.sendMail({
         to: email,
