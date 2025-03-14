@@ -27,4 +27,15 @@ export class MaterialsService {
       include: { imageAnalysis: true },
     });
   }
+
+  async getMaterialsByCategory(category: string) { 
+    console.log('🟡 Filtering materials by category:', category);
+    return this.prisma.material.findMany({
+      where: { 
+        category: { equals: category, mode: 'insensitive' }
+      },
+    });
+}
+
+
 }

@@ -59,6 +59,7 @@ export class OpenAiService {
         {
           "name": "Material Name",
           "type": "Material Type",
+          "category": "General Category",
           "description": "A short but precise description of the material.",
           "materialProperties": [
             "Property 1",
@@ -80,6 +81,11 @@ export class OpenAiService {
     
     ### **Key Instructions:**
     - Identify **all visible materials**, including flooring, cabinetry, countertops, walls, backsplashes, appliances, fixtures, and accessories.
+    - Assign a **Category** for each material. 
+      - Example: If the material is "Granite" or "Marble", set **category** as "Stone".
+      - Example: If the material is "Teak Wood" or "Oak Wood", set **category** as "Wood".
+      - Example: If the material is "Stainless Steel" or "Iron", set **category** as "Metal".
+      - Example: If the material is "Ceramic Tile" or "Porcelain", set **category** as "Tile".
     - Include even **small details** like plastic handles, glass doors, rubber seals, or metal trims.
     - Ensure **materialProperties** and **usesOfMaterial** contain at least three relevant entries.
     - Provide **concise but meaningful descriptions** of each material.
@@ -90,7 +96,7 @@ export class OpenAiService {
           content: [
             {
               type: 'text',
-              text: 'Analyze this image and detect all materials used in it. Provide structured JSON output with details including name, type, description, material properties, origins, and common uses.',
+              text: 'Analyze this image and detect all materials used in it. Provide structured JSON output with details including name, type, category, description, material properties, origins, and common uses.',
             },
             {
               type: 'image_url',
@@ -160,31 +166,26 @@ const imageAnalysis = await this.prisma.imageAnalysis.create({
   },
 });
 
-console.log(`✅ imageAnalysis created with ID: ${imageAnalysis.id}`);
-
 const materialPromises = parsedData.materials.map(async (material, index) => {
-  console.log(`🔍 Processing material ${index + 1}:`, material);
 
   const materialName = material?.name?.trim() || 'Unknown';
   const materialType = material?.type?.trim() || 'Unknown';
-  const materialDescription = material?.description?.trim() || 'No description available'; // ✅ Include description
+  const materialCategory = material?.category?.trim() || 'Other'; 
+  const materialDescription = material?.description?.trim() || 'No description available'; 
   const materialProperties = Array.isArray(material?.materialProperties) && material.materialProperties.length > 0
-  ? material.materialProperties
-  : ["Unknown"]; // Default value to prevent empty fields
+    ? material.materialProperties
+    : ["Unknown"]; 
   const materialOrigins = Array.isArray(material?.materialOrigins) 
     ? material.materialOrigins 
     : [material?.materialOrigins || 'Unknown'];
 
-    const usesOfMaterial = Array.isArray(material?.usesOfMaterial) && material.usesOfMaterial.length > 0
+  const usesOfMaterial = Array.isArray(material?.usesOfMaterial) && material.usesOfMaterial.length > 0
     ? material.usesOfMaterial
-    : ["General Construction"]; // Default fallback
-
+    : ["General Construction"];
 
   let materialImage = material?.materialImage?.trim() || null;
   if (!materialImage) {
-    console.log(`🚀 Generating new image for: ${materialName}...`);
     materialImage = await this.generateMaterialImage(materialName, email, materialType);
-    console.log(`✅ Generated image URL: ${materialImage}`);
   }
 
   return this.prisma.material.create({
@@ -192,7 +193,8 @@ const materialPromises = parsedData.materials.map(async (material, index) => {
       imageAnalysisId: imageAnalysis.id,
       materialName,  
       materialType,
-      description: materialDescription, // ✅ Added description
+      category: materialCategory,
+      description: materialDescription, 
       materialProperties,
       materialOrigins,
       usesOfMaterial,
@@ -215,7 +217,7 @@ materialResults.forEach((result, index) => {
 });
 
       
-      return { message: 'Image analysis and materials saved successfully!', parsedData };
+      return { message: 'Image analysis and materials saved successfully!' };
     } catch (error) {
       console.error('❌ Error while calling OpenAI API:', error);
       throw new Error('Error while calling OpenAI API.');
@@ -246,12 +248,6 @@ materialResults.forEach((result, index) => {
         "quality": "hd",
         "size": "1024x1024"
     };
-                
-
-      // console.log(
-      //   `📤 Sending request to OpenAI:`,
-      //   JSON.stringify(requestBody, null, 2),
-      // );
 
       const dalleResponse = await fetch(
         'https://api.openai.com/v1/images/generations',
@@ -265,9 +261,7 @@ materialResults.forEach((result, index) => {
         },
       );
 
-      // console.log(`🔄 Waiting for OpenAI response...`);
       const dalleData = await dalleResponse.json();
-      // console.log(`📸 DALL·E Response:`, JSON.stringify(dalleData, null, 2));
 
       if (!dalleResponse.ok || !dalleData.data || dalleData.data.length === 0) {
         console.error(`❌ No image generated for ${materialName}`);
@@ -282,12 +276,9 @@ materialResults.forEach((result, index) => {
        }
        
       const imageUrl = dalleData.data[0].url;
-      // console.log(`✅ OpenAI Image URL: ${imageUrl}`);
 
-      // ✅ Generate a Single Timestamp Before Calling saveImageToLocalServer
       const timestamp = Date.now();
 
-      // 🔽 Download and save the image to your server with the same timestamp
       const imagePath = await this.saveImageToLocalServer(
         imageUrl,
         materialName,
@@ -299,9 +290,7 @@ materialResults.forEach((result, index) => {
         return null;
       }
 
-      // ✅ Use the same timestamp for database storage
      const newImageUrl = `${appUrl}/images/${timestamp}_${materialName}.png`;
-    //  console.log(`✅ Stored Image URL: ${newImageUrl}`);
 
       return newImageUrl;
     } catch (error) {
@@ -313,7 +302,6 @@ materialResults.forEach((result, index) => {
     }
   }
 
-  // 🔽 Helper function to download and save image locally
   async saveImageToLocalServer(
     imageUrl: string,
     materialName: string,
@@ -330,16 +318,12 @@ materialResults.forEach((result, index) => {
         return null;
       }
 
-      // ✅ Use the provided timestamp
       const userDir = path.join(__dirname, `../../public/images/`);
       const imagePath = path.join(userDir, `${timestamp}_${materialName}.png`);
 
       if (!fs.existsSync(userDir)) {
         fs.mkdirSync(userDir, { recursive: true });
-        // console.log(`📁 Created missing directory: ${userDir}`);
       }
-
-      // console.log(`⬇️ Downloading image to: ${imagePath}`);
 
       const writer = fs.createWriteStream(imagePath);
       const response = await axios({
@@ -352,7 +336,6 @@ materialResults.forEach((result, index) => {
 
       return new Promise((resolve, reject) => {
         writer.on('finish', () => {
-          // console.log(`✅ Image saved successfully: ${imagePath}`);
           resolve(imagePath);
         });
         writer.on('error', (err) => {

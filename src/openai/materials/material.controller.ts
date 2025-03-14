@@ -5,19 +5,19 @@ import { MaterialsService } from './material.service';
 export class MaterialsController {
   constructor(private readonly materialsService: MaterialsService) {}
 
-  // ✅ Get all materials
   @Get()
-  async getAllMaterials() {
-    return this.materialsService.getAllMaterials();
+  async getMaterials(@Query('category') category?: string) { 
+    if (!category) {
+      return this.materialsService.getAllMaterials();
+    }
+    return this.materialsService.getMaterialsByCategory(category);
   }
 
-  // ✅ Search materials
   @Get('search')
   async searchMaterials(@Query('query') query: string) {
     return this.materialsService.searchMaterials(query);
   }
 
-  // ✅ Get material details
   @Get(':id')
   async getMaterialDetails(@Param('id') id: string) {
     return this.materialsService.getMaterialDetails(id);

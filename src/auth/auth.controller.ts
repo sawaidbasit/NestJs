@@ -160,4 +160,16 @@ export class AuthController {
     }
   }
 
+  @Post('google-signin')
+  async googleSignIn(@Body() body: { name: string; email: string; googleId: string; idToken: string; picture?: string }) {
+    const user = await this.authService.saveGoogleUser(body.name, body.email, body.googleId);
+
+    return {
+      message: "Google Sign-In Success",
+        "User": user.name,
+        "Email": user.email,
+        "ID Token": user.googleId,
+    };
+  }
+
 }

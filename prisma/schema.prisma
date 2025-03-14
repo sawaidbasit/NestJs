@@ -16,6 +16,7 @@ model User {
   isVerified           Boolean   @default(false)
   otp                  String?
   appleId              String? @unique
+  googleId             String? @unique
   resetPasswordExpires DateTime?
   resetPasswordToken   String?
   otpCreatedAt         DateTime?
@@ -37,6 +38,7 @@ model Material {
   id                String    @id @default(uuid())
   materialName      String
   materialType      String
+  category         String 
   materialProperties String[]  // Array of strings
   materialOrigins   String[]  // Array of strings
   usesOfMaterial    String[]  // Array of strings

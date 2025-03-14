@@ -36,7 +36,6 @@ export class AuthService {
 
     for (const user of expiredUsers) {
         if (!user.otpCreatedAt) {
-            console.warn(`⚠️ User ${user.email} has a null otpCreatedAt. Skipping.`);
             continue;
         }
 
@@ -225,7 +224,6 @@ export class AuthService {
     const currentTime = new Date();
 
     if (!user.resetPasswordExpires || new Date(user.resetPasswordExpires) < currentTime) {
-      console.error('❌ Reset token expired');
       throw new BadRequestException('Reset token expired');
     }
 
@@ -314,13 +312,21 @@ export class AuthService {
     return { message: 'New OTP sent to your email.' };
 }
 
-async saveAppleUser(name: string, email: string, appleId: string) {
+  async saveAppleUser(name: string, email: string, appleId: string) {
+    return this.prisma.user.upsert({
+      where: { email },
+      update: { name, appleId },
+      create: { name, email, appleId, password: null, isVerified: true },
+    });
+  }
+
+  async saveGoogleUser(name: string, email: string, googleId: string) {
   return this.prisma.user.upsert({
-    where: { email },
-    update: { name, appleId },
-    create: { name, email, appleId, password: null, isVerified: true },
-  });
-}
+    where: {email},
+    update: {name, googleId},
+    create: {name, email, googleId, password: null, isVerified: true}
+  })
+  }
 
   private isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
