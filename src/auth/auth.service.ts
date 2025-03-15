@@ -101,7 +101,6 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const otp = this.generateRandomString(6, '0123456789');
-    // const otp = randomstring.generate({ length: 6, charset: 'numeric' });
 
     const otpCreatedAt = new Date();
 

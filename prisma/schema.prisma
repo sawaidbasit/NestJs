@@ -15,19 +15,20 @@ model User {
   createdAt            DateTime  @default(now())
   isVerified           Boolean   @default(false)
   otp                  String?
-  appleId              String? @unique
-  googleId             String? @unique
+  appleId              String?   @unique
+  googleId             String?   @unique
   resetPasswordExpires DateTime?
   resetPasswordToken   String?
   otpCreatedAt         DateTime?
   imageAnalyses        ImageAnalysis[] @relation("UserToImageAnalysis")
+  favorites            Favorite[]      @relation("UserToFavorite")
 }
 
 model ImageAnalysis {
   id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   imageUrl    String?
-  materials   Material[] @relation("ImageAnalysisToMaterial")  // Establishing relation with Material tableN
+  materials   Material[] @relation("ImageAnalysisToMaterial")  
   userId      String
   user        User     @relation("UserToImageAnalysis", fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -46,4 +47,14 @@ model Material {
   description String @default("No description available")
   imageAnalysisId   String
   imageAnalysis     ImageAnalysis @relation("ImageAnalysisToMaterial", fields: [imageAnalysisId], references: [id], onDelete: Cascade)
+  favorites         Favorite[] @relation("MaterialToFavorite")
+}
+
+model Favorite {
+  id         String   @id @default(uuid())
+  userEmail     String
+  materialId String
+  user       User     @relation("UserToFavorite", fields: [userEmail], references: [email], onDelete: Cascade)
+  material   Material @relation("MaterialToFavorite", fields: [materialId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 }
