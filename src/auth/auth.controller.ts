@@ -134,10 +134,9 @@ export class AuthController {
   @Post('change-password')
   async changePassword(
     @Body('email') email: string,
-    @Body('oldPassword') oldPassword: string,
     @Body('newPassword') newPassword: string
   ) {
-    return this.authService.changePassword(email, oldPassword, newPassword);
+    return this.authService.changePassword(email, newPassword);
   }
 
   @Post('resend-otp')

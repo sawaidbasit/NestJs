@@ -257,8 +257,8 @@ export class AuthService {
     return { message: 'Valid reset token' };
 }
 
-  async changePassword(email: string, oldPassword: string, newPassword: string) {
-    if (!email || !oldPassword || !newPassword) {
+  async changePassword(email: string, newPassword: string) {
+    if (!email || !newPassword) {
       throw new BadRequestException('All fields are required');
     }
   
@@ -266,11 +266,6 @@ export class AuthService {
   
     if (!user) {
       throw new NotFoundException('User not found');
-    }
-  
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) {
-      throw new BadRequestException('Incorrect old password');
     }
   
     if (!this.isValidPassword(newPassword)) {
