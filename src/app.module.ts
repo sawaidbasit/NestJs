@@ -10,12 +10,17 @@ import { OpenAiController } from './openai/openai.controller';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { HomeModule } from './home/home.module';
+import { MaterialsController } from './materials/material.controller';
+import { MaterialsModule } from './materials/material.module';
+import { FavoriteModule } from './favoritesMaterial/favorite.module';
 
 @Module({
   imports: [
     HomeModule,
     AuthModule,
     OpenAiModule,
+    MaterialsModule,
+    FavoriteModule,
     ImageAnalysisModule,
     PrismaModule,
     EmailModule,
@@ -24,6 +29,6 @@ import { HomeModule } from './home/home.module';
       rootPath: join(__dirname, '..', 'client'),
     }),
   ],
-  controllers: [HomeController, OpenAiController],
+  controllers: [HomeController, OpenAiController, MaterialsController],
 })
 export class AppModule {}
