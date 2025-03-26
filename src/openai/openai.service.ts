@@ -217,7 +217,11 @@ materialResults.forEach((result, index) => {
 });
 
       
-      return { message: 'Image analysis and materials saved successfully!' };
+      return { message: 'Image analysis and materials saved successfully!',
+        materials: materialResults.map(result => 
+          result.status === 'fulfilled' ? result.value : null
+        ).filter(material => material !== null)
+       };
     } catch (error) {
       console.error('❌ Error while calling OpenAI API:', error);
       throw new Error('Error while calling OpenAI API.');
