@@ -28,6 +28,7 @@ model ImageAnalysis {
   id          String   @id @default(uuid())
   createdAt   DateTime @default(now())
   imageUrl    String?
+  category   String?
   materials   Material[] @relation("ImageAnalysisToMaterial")  
   userId      String
   user        User     @relation("UserToImageAnalysis", fields: [userId], references: [id], onDelete: Cascade)

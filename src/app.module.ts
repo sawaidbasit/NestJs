@@ -13,6 +13,7 @@ import { HomeModule } from './home/home.module';
 import { MaterialsController } from './materials/material.controller';
 import { MaterialsModule } from './materials/material.module';
 import { FavoriteModule } from './favoritesMaterial/favorite.module';
+import { TipsModule } from './tips/tips.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { FavoriteModule } from './favoritesMaterial/favorite.module';
     MaterialsModule,
     FavoriteModule,
     ImageAnalysisModule,
+    TipsModule,
     PrismaModule,
     EmailModule,
     ScheduleModule.forRoot(),

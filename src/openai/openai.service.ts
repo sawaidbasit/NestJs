@@ -52,9 +52,10 @@ export class OpenAiService {
           role: 'system',
           content: `You are an expert in material recognition for home construction, renovation, and interior design. 
     Your task is to analyze images and provide structured data about **all detected materials**, including primary and secondary materials.
-    
+    In addition to the materials, **also determine the category of the image**. For example, if the image is of a kitchen, the category would be "kitchen", if it's a living room, the category would be "living room", etc.
     ### **Return JSON in this format:**
     {
+      "imageCategory": "Kitchen", // <-- Add image category here
       "materials": [
         {
           "name": "Material Name",
@@ -89,7 +90,8 @@ export class OpenAiService {
     - Include even **small details** like plastic handles, glass doors, rubber seals, or metal trims.
     - Ensure **materialProperties** and **usesOfMaterial** contain at least three relevant entries.
     - Provide **concise but meaningful descriptions** of each material.
-    - Do **not** group different materials together—each must be listed separately.`,
+    - Do **not** group different materials together—each must be listed separately.,
+    - Include the **image's overall category** (e.g., kitchen, living room, etc.).`
         },
         {
           role: 'user',
@@ -158,14 +160,17 @@ export class OpenAiService {
         return { error: 'User not found!' };
       }
 
-     // Ensure imageAnalysis is declared and assigned before use
-const imageAnalysis = await this.prisma.imageAnalysis.create({
-  data: {
-    userId: user.id,
-    imageUrl: imageBase64
-  },
-});
+    const category = parsedData?.imageCategory ? parsedData.imageCategory : 'Unknown';
+    console.log("Category detected:", category);
 
+    const imageAnalysis = await this.prisma.imageAnalysis.create({
+      data: {
+        userId: user.id,
+        imageUrl: imageBase64,
+         category: category   
+      },
+    });
+    
 const materialPromises = parsedData.materials.map(async (material, index) => {
 
   const materialName = material?.name?.trim() || 'Unknown';
@@ -220,7 +225,8 @@ materialResults.forEach((result, index) => {
       return { message: 'Image analysis and materials saved successfully!',
         materials: materialResults.map(result => 
           result.status === 'fulfilled' ? result.value : null
-        ).filter(material => material !== null)
+        ).filter(material => material !== null),
+        category: parsedData.imageCategory,
        };
     } catch (error) {
       console.error('❌ Error while calling OpenAI API:', error);
