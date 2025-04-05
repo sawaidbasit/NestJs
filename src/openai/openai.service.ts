@@ -36,7 +36,6 @@ export class OpenAiService {
       };
     }
 
-    console.log('✅ Returning image analyses for user:', email);
     return user.imageAnalyses;
   }
 
@@ -145,7 +144,6 @@ export class OpenAiService {
         throw new Error('Invalid JSON format from OpenAI response.');
       }
 
-      console.log('✅ Parsed OpenAI response:', parsedData);
 
       if (!parsedData.materials || !Array.isArray(parsedData.materials)) {
         return { error: 'No materials detected in the image.' };
@@ -161,7 +159,6 @@ export class OpenAiService {
       }
 
     const category = parsedData?.imageCategory ? parsedData.imageCategory : 'Unknown';
-    console.log("Category detected:", category);
 
     const imageAnalysis = await this.prisma.imageAnalysis.create({
       data: {
@@ -217,7 +214,6 @@ materialResults.forEach((result, index) => {
   if (result.status === 'rejected') {
     console.error(`❌ Material ${index + 1} failed:`, result.reason);
   } else {
-    console.log(`✅ Material ${index + 1} inserted successfully`);
   }
 });
 
@@ -289,9 +285,12 @@ materialResults.forEach((result, index) => {
 
       const timestamp = Date.now();
 
+      const sanitizedMaterialName = materialName
+      .replace(/\s+/g, '_')
+      .replace(/[^\w-_]+/g, '');
       const imagePath = await this.saveImageToLocalServer(
         imageUrl,
-        materialName,
+        sanitizedMaterialName,
         email,
         timestamp,
       );
@@ -300,7 +299,7 @@ materialResults.forEach((result, index) => {
         return null;
       }
 
-     const newImageUrl = `${appUrl}/images/${timestamp}_${materialName}.png`;
+     const newImageUrl = `${appUrl}/images/${timestamp}_${sanitizedMaterialName}.png`;
 
       return newImageUrl;
     } catch (error) {
@@ -314,7 +313,7 @@ materialResults.forEach((result, index) => {
 
   async saveImageToLocalServer(
     imageUrl: string,
-    materialName: string,
+    imageName: string,
     email: string,
     timestamp: number,
   ): Promise<string | null> {
@@ -328,8 +327,12 @@ materialResults.forEach((result, index) => {
         return null;
       }
 
+      const sanitizedImageName = imageName
+        .replace(/\s+/g, '_')         // Replace spaces with underscores
+        .replace(/[^\w-_]+/g, '');    // Remove any non-alphanumeric characters except underscores and hyphens 
+
       const userDir = path.join(__dirname, `../../public/images/`);
-      const imagePath = path.join(userDir, `${timestamp}_${materialName}.png`);
+      const imagePath = path.join(userDir, `${timestamp}_${sanitizedImageName}.png`);
 
       if (!fs.existsSync(userDir)) {
         fs.mkdirSync(userDir, { recursive: true });
