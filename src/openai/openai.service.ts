@@ -49,7 +49,7 @@ export class OpenAiService {
       messages: [
         {
           role: 'system',
-          content: `You are an expert in material recognition for home construction, renovation, and interior design. 
+          content: `You are an expert in material recognition for home construction, renovation, and interior design.
     Your task is to analyze images and provide structured data about **all detected materials**, including primary and secondary materials.
     In addition to the materials, **also determine the category of the image**. For example, if the image is of a kitchen, the category would be "kitchen", if it's a living room, the category would be "living room", etc.
     ### **Return JSON in this format:**
@@ -78,10 +78,10 @@ export class OpenAiService {
         }
       ]
     }
-    
+
     ### **Key Instructions:**
     - Identify **all visible materials**, including flooring, cabinetry, countertops, walls, backsplashes, appliances, fixtures, and accessories.
-    - Assign a **Category** for each material. 
+    - Assign a **Category** for each material.
       - Example: If the material is "Granite" or "Marble", set **category** as "Stone".
       - Example: If the material is "Teak Wood" or "Oak Wood", set **category** as "Wood".
       - Example: If the material is "Stainless Steel" or "Iron", set **category** as "Metal".
@@ -110,7 +110,7 @@ export class OpenAiService {
       ],
       response_format: { type: 'json_object' },
     };
-    
+
     try {
       const response = await fetch(this.API_URL, {
         method: 'POST',
@@ -167,18 +167,18 @@ export class OpenAiService {
          category: category   
       },
     });
-    
+
 const materialPromises = parsedData.materials.map(async (material, index) => {
 
   const materialName = material?.name?.trim() || 'Unknown';
   const materialType = material?.type?.trim() || 'Unknown';
-  const materialCategory = material?.category?.trim() || 'Other'; 
-  const materialDescription = material?.description?.trim() || 'No description available'; 
+  const materialCategory = material?.category?.trim() || 'Other';
+  const materialDescription = material?.description?.trim() || 'No description available';
   const materialProperties = Array.isArray(material?.materialProperties) && material.materialProperties.length > 0
     ? material.materialProperties
-    : ["Unknown"]; 
-  const materialOrigins = Array.isArray(material?.materialOrigins) 
-    ? material.materialOrigins 
+    : ["Unknown"];
+  const materialOrigins = Array.isArray(material?.materialOrigins)
+    ? material.materialOrigins
     : [material?.materialOrigins || 'Unknown'];
 
   const usesOfMaterial = Array.isArray(material?.usesOfMaterial) && material.usesOfMaterial.length > 0
@@ -193,10 +193,10 @@ const materialPromises = parsedData.materials.map(async (material, index) => {
   return this.prisma.material.create({
     data: {
       imageAnalysisId: imageAnalysis.id,
-      materialName,  
+      materialName,
       materialType,
       category: materialCategory,
-      description: materialDescription, 
+      description: materialDescription,
       materialProperties,
       materialOrigins,
       usesOfMaterial,
@@ -217,9 +217,9 @@ materialResults.forEach((result, index) => {
   }
 });
 
-      
+
       return { message: 'Image analysis and materials saved successfully!',
-        materials: materialResults.map(result => 
+        materials: materialResults.map(result =>
           result.status === 'fulfilled' ? result.value : null
         ).filter(material => material !== null),
         category: parsedData.imageCategory,
@@ -240,12 +240,12 @@ materialResults.forEach((result, index) => {
 
       const requestBody = {
         model: 'dall-e-3',
-        // prompt: `A **completely flat, seamless, tileable texture sample** of '${materialName}' material.  
-        // - 🚫 **No spheres, no cubes, no 3D objects, no perspective, no depth.**  
-        // - 🎨 The material **fills the entire image edge-to-edge, with no empty space, no background, and no borders.**  
-        // - 🔍 The texture is **high-resolution and photorealistic,** suitable for **architecture, 3D modeling, and material libraries.**  
-        // - ☀️ **No shadows, no lighting effects, no reflections.** The texture should be evenly lit, as if **scanned from a real-world sample.**  
-        // - 📏 **100% tileable and seamless**, allowing for smooth repetition in architectural and 3D design applications.  
+        // prompt: `A **completely flat, seamless, tileable texture sample** of '${materialName}' material.
+        // - 🚫 **No spheres, no cubes, no 3D objects, no perspective, no depth.**
+        // - 🎨 The material **fills the entire image edge-to-edge, with no empty space, no background, and no borders.**
+        // - 🔍 The texture is **high-resolution and photorealistic,** suitable for **architecture, 3D modeling, and material libraries.**
+        // - ☀️ **No shadows, no lighting effects, no reflections.** The texture should be evenly lit, as if **scanned from a real-world sample.**
+        // - 📏 **100% tileable and seamless**, allowing for smooth repetition in architectural and 3D design applications.
         // - 🏗️ Example materials: 'wood veneer, marble slab, porcelain tile, granite countertop, concrete, laminate, or fabric.'`,
         // n: 1,
         // size: '1024x1024'
@@ -280,7 +280,7 @@ materialResults.forEach((result, index) => {
            console.error(`❌ User not found for email: ${email}`);
            return null;
        }
-       
+
       const imageUrl = dalleData.data[0].url;
 
       const timestamp = Date.now();
@@ -329,7 +329,7 @@ materialResults.forEach((result, index) => {
 
       const sanitizedImageName = imageName
         .replace(/\s+/g, '_')         // Replace spaces with underscores
-        .replace(/[^\w-_]+/g, '');    // Remove any non-alphanumeric characters except underscores and hyphens 
+        .replace(/[^\w-_]+/g, '');    // Remove any non-alphanumeric characters except underscores and hyphens
 
       const userDir = path.join(__dirname, `../../public/images/`);
       const imagePath = path.join(userDir, `${timestamp}_${sanitizedImageName}.png`);
