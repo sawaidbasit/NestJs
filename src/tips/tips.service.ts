@@ -286,7 +286,7 @@ export class TipsService {
 
       return new Promise((resolve, reject) => {
         writer.on('finish', () => {
-          const baseUrl = process.env.APP_BASE_URL ?? 'http://localhost:3000';
+          const baseUrl = process.env.APP_BASE_URL;
           resolve(`${baseUrl}/images/${timestamp}_${category}.png`);
         });
         writer.on('error', (err) => {
@@ -331,8 +331,9 @@ export class TipsService {
       .sort((a, b) => b[1] - a[1]) // Sort by frequency (highest first)
       .map(([category]) => category);
 
-    // Return the sorted categories
-    return sortedCategories;
+    // Ensure only the most frequent category is returned
+    return sortedCategories.length > 0 ? [sortedCategories[0]] : [];
+
   }
 
   private async getMaterialsForCategory(category: string): Promise<any[]> {
