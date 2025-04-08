@@ -286,7 +286,7 @@ export class TipsService {
 
       return new Promise((resolve, reject) => {
         writer.on('finish', () => {
-          const baseUrl = process.env.APP_BASE_URL;
+          const baseUrl = process.env.APP_URL;
           resolve(`${baseUrl}/images/${timestamp}_${category}.png`);
         });
         writer.on('error', (err) => {
