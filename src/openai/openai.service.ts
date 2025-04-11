@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import axios from 'axios';
+import * as sharp from 'sharp';
 
 dotenv.config();
 
@@ -164,7 +165,7 @@ export class OpenAiService {
       data: {
         userId: user.id,
         imageUrl: imageBase64,
-         category: category   
+         category: category
       },
     });
 
@@ -299,7 +300,7 @@ materialResults.forEach((result, index) => {
         return null;
       }
 
-     const newImageUrl = `${appUrl}/images/${timestamp}_${sanitizedMaterialName}.png`;
+     const newImageUrl = `${appUrl}/images/${timestamp}_${sanitizedMaterialName}.webp`;
 
       return newImageUrl;
     } catch (error) {
@@ -328,17 +329,18 @@ materialResults.forEach((result, index) => {
       }
 
       const sanitizedImageName = imageName
-        .replace(/\s+/g, '_')         // Replace spaces with underscores
-        .replace(/[^\w-_]+/g, '');    // Remove any non-alphanumeric characters except underscores and hyphens
+        .replace(/\s+/g, '_')
+        .replace(/[^\w-_]+/g, '');
 
       const userDir = path.join(__dirname, `../../public/images/`);
-      const imagePath = path.join(userDir, `${timestamp}_${sanitizedImageName}.png`);
+      const pngPath = path.join(userDir, `${timestamp}_${sanitizedImageName}.png`);
+      const webpPath = path.join(userDir, `${timestamp}_${sanitizedImageName}.webp`);
 
       if (!fs.existsSync(userDir)) {
         fs.mkdirSync(userDir, { recursive: true });
       }
 
-      const writer = fs.createWriteStream(imagePath);
+      const writer = fs.createWriteStream(pngPath);
       const response = await axios({
         url: imageUrl,
         method: 'GET',
@@ -347,18 +349,23 @@ materialResults.forEach((result, index) => {
 
       response.data.pipe(writer);
 
-      return new Promise((resolve, reject) => {
-        writer.on('finish', () => {
-          resolve(imagePath);
-        });
-        writer.on('error', (err) => {
-          console.error(`❌ Error saving image:`, err);
-          reject(null);
-        });
+      await new Promise<void>((resolve, reject) => {
+        writer.on('finish', resolve);
+        writer.on('error', reject);
       });
+
+      await sharp(pngPath)
+        .webp({ quality: 70 })
+        .toFile(webpPath);
+
+      fs.unlinkSync(pngPath);
+
+      return `/images/${timestamp}_${sanitizedImageName}.webp`;
+      ;
     } catch (error) {
-      console.error(`❌ Failed to download and save image:`, error);
+      console.error(`❌ Failed to save and convert image:`, error);
       return null;
     }
   }
+
 }
