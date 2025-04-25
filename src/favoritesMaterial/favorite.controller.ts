@@ -17,7 +17,7 @@ import {
   export class FavoritesController {
     constructor(private readonly favoritesService: FavoriteService) {}
 
-    @Get()
+    @Get('all')
     async getFavorites(@Query('userEmail') userEmail: string) {
 
       if (!userEmail) {

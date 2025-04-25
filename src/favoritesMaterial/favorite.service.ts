@@ -99,12 +99,12 @@ export class FavoriteService {
   // ➤ Get All Favorites of User
   async getFavorites(userEmail: string) {
     try {
-   
+
       const favorites = await this.prisma.favorite.findMany({
         where: { userEmail },
         include: { material: true },
       });
-  
+
       if (!favorites || favorites.length === 0) {
         return {
           statusCode: HttpStatus.OK,
@@ -112,7 +112,7 @@ export class FavoriteService {
           data: [],
         };
       }
-  
+
       return {
         statusCode: HttpStatus.OK,
         message: 'Favorites fetched successfully',
