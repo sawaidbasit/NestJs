@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Query, Req, BadRequestException, Res } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Req, BadRequestException, Res, Param } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Request, Response } from 'express'; // ✅ Import Express Request
 
@@ -27,7 +27,7 @@ export class AuthController {
   //   @Req() request: Request, 
   //   @Body('newPassword') newPassword: string
   // ) {
-    
+
   //   const email = request.query['email'] as string;
   //   const token = request.query['token'] as string;
 
@@ -45,11 +45,11 @@ export class AuthController {
     @Query('token') token?: string,
     @Query('email') email?: string
   ) {
-  
+
     if (!token || !email) {
       throw new BadRequestException('Missing required fields');
     }
-  
+
     const htmlForm = `
       <!DOCTYPE html>
       <html lang="en">
@@ -70,24 +70,24 @@ export class AuthController {
         <form method="POST" action="/auth/reset-password">
           <input type="hidden" name="email" value="${email}" />
           <input type="hidden" name="token" value="${token}" />
-  
+
           <label>New Password:</label>
           <input type="password" id="newPassword" name="newPassword" required />
           <span class="toggle-password" onclick="togglePassword('newPassword')">Show</span>
-  
+
           <label>Confirm Password:</label>
           <input type="password" id="confirmPassword" required />
           <span class="toggle-password" onclick="togglePassword('confirmPassword')">Show</span>
-  
+
           <button type="submit" onclick="return validatePasswords()">Reset Password</button>
         </form>
-  
+
         <script>
           function togglePassword(id) {
             const input = document.getElementById(id);
             input.type = input.type === 'password' ? 'text' : 'password';
           }
-  
+
           function validatePasswords() {
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
@@ -101,12 +101,10 @@ export class AuthController {
       </body>
       </html>
     `;
-  
+
     res.setHeader('Content-Type', 'text/html');
     res.send(htmlForm);
   }
-  
-
 
   @Post('reset-password')
   async resetPassword(
@@ -125,7 +123,7 @@ export class AuthController {
 
   @Get('verify-reset-token')
   async verifyResetToken(
-  @Query('email') email: string, 
+  @Query('email') email: string,
   @Query('token') token: string
   ) {
     return this.authService.verifyResetToken(email, token);
@@ -171,4 +169,33 @@ export class AuthController {
     };
   }
 
+   @Post('validate-token/:email')
+   async validateToken(@Param('email') email: string) {
+     try {
+       const isValid = await this.authService.validateAccessToken(email);
+       return { message: isValid ? 'Token is valid' : 'Token is not valid' };
+     } catch (error) {
+       throw new BadRequestException(error.message);
+     }
+   }
+
+   @Post('refresh-token')
+   async refreshToken(@Body() body: { refreshAccessToken: string }) {
+     const { refreshAccessToken } = body;
+
+     if (!refreshAccessToken) {
+       throw new BadRequestException('Refresh token is required');
+     }
+
+     try {
+       const { accessToken, accessTokenExpiredTime } = await this.authService.refreshAccessToken(refreshAccessToken);
+       return {
+         message: 'Access token refreshed successfully',
+         accessToken,
+         accessTokenExpiredTime,
+       };
+     } catch (error) {
+       throw new BadRequestException(error.message);
+     }
+   }
 }

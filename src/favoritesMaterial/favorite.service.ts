@@ -6,7 +6,22 @@ export class FavoriteService {
   constructor(private prisma: PrismaService) {}
 
   // ➤ Add Material to Favorites
-  async addToFavorites(userEmail: string, materialId: string) {
+  async addToFavorites(userEmail: string, materialId: string, accessToken: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { accessToken },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.accessToken !== accessToken) {
+      throw new Error('Invalid access token');
+    }
+
+    if (!user.isPremium) {
+      return { error: 'Access denied. Premium membership required.' };
+    }
     try {
       console.log(`🟢 Adding to favorites: User(${userEmail}) - Material(${materialId})`);
 

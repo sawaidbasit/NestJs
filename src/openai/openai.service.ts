@@ -40,9 +40,25 @@ export class OpenAiService {
     return user.imageAnalyses;
   }
 
-  async analyzeImage(imageBase64: string, email: string): Promise<any> {
+  async analyzeImage(imageBase64: string, email: string, accessToken: string): Promise<any> {
     if (!this.API_KEY) {
       throw new Error('OpenAI API key is missing! Set it in the .env file.');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { accessToken },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.accessToken !== accessToken) {
+      throw new Error('Invalid access token');
+    }
+
+    if (!user.isPremium) {
+      return { error: 'Access denied. Premium membership required.' };
     }
 
     const payload = {

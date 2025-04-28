@@ -12,8 +12,12 @@ model User {
   name                 String
   email                String          @unique
   password             String?
+  accessToken          String?         @unique
+  refreshAccessToken   String?
+  accessTokenExpiredTime DateTime?
   createdAt            DateTime        @default(now())
   isVerified           Boolean         @default(false)
+  isPremium            Boolean         @default(false)
   otp                  String?
   appleId              String?         @unique
   googleId             String?         @unique

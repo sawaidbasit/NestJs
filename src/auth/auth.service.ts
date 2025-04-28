@@ -1,5 +1,6 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -9,7 +10,7 @@ import { Request } from 'express'; // ✅ Import Express Request
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name); 
+  private readonly logger = new Logger(AuthService.name);
 
   private generateRandomString(length: number, charset: string): string {
     const characters = charset;
@@ -58,14 +59,14 @@ export class AuthService {
   @Cron(CronExpression.EVERY_MINUTE)
   async removeExpiredResetTokens() {
     const currentTime = new Date();
-  
+
     const expiredUsers = await this.prisma.user.findMany({
       where: {
         resetPasswordToken: { not: null },
         resetPasswordExpires: { lte: currentTime },
       },
     });
-  
+
     for (const user of expiredUsers) {
       await this.prisma.user.update({
         where: { id: user.id },
@@ -74,7 +75,7 @@ export class AuthService {
           resetPasswordExpires: null,
         },
       });
-  
+
     }
   }
 
@@ -100,7 +101,13 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const otp = this.generateRandomString(6, '0123456789');
+    const accessToken = randomBytes(32).toString('hex');
+    const refreshAccessToken = randomBytes(32).toString('hex');
+
+    // const accessToken = crypto.randomBytes(32).toString('hex');
+    const accessTokenExpiredTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 din
 
     const otpCreatedAt = new Date();
 
@@ -109,6 +116,9 @@ export class AuthService {
             name,
             email,
             password: hashedPassword,
+            accessToken,
+            refreshAccessToken,
+            accessTokenExpiredTime,
             otp,
             otpCreatedAt,
             isVerified: false,
@@ -157,6 +167,47 @@ export class AuthService {
     return { message: 'Email verified successfully!' };
   }
 
+  async validateAccessToken(accessToken: string) {
+
+    const user = await this.prisma.user.findFirst({ where: { accessToken } });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired token');
+    }
+
+    if (!user.accessTokenExpiredTime || new Date() > new Date(user.accessTokenExpiredTime)) {
+      throw new UnauthorizedException('Token expired, please refresh your access token');
+    }
+
+    return true;
+  }
+
+  async refreshAccessToken(refreshToken: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { refreshAccessToken: refreshToken },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
+    const newAccessToken = randomBytes(32).toString('hex');
+    const newAccessTokenExpiredTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await this.prisma.user.update({
+      where: { email: user.email },
+      data: {
+        accessToken: newAccessToken,
+        accessTokenExpiredTime: newAccessTokenExpiredTime,
+      },
+    });
+
+    return {
+      accessToken: newAccessToken,
+      accessTokenExpiredTime: newAccessTokenExpiredTime,
+    };
+  }
+
   async login(email: string, password: string) {
     if (!email || !password) {
       throw new BadRequestException('Email and password are required');
@@ -190,7 +241,7 @@ export class AuthService {
     const resetToken = this.generateRandomString(32, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
 
     // const resetToken = randomstring.generate({ length: 32, charset: 'alphanumeric' });
- 
+
     const hashedToken = await bcrypt.hash(resetToken, 10);
     const expiryDate = new Date();
     expiryDate.setMinutes(expiryDate.getMinutes() + 1);
@@ -238,7 +289,7 @@ export class AuthService {
 
     return { message: 'Password reset successful' };
 }
-  
+
   async verifyResetToken(email: string, token: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || !user.resetPasswordToken || !user.resetPasswordExpires) {
@@ -261,28 +312,28 @@ export class AuthService {
     if (!email || !newPassword) {
       throw new BadRequestException('All fields are required');
     }
-  
+
     const user = await this.prisma.user.findUnique({ where: { email } });
-  
+
     if (!user) {
       throw new NotFoundException('User not found');
     }
-  
+
     if (!this.isValidPassword(newPassword)) {
       throw new BadRequestException(
         'Password must be at least 8 characters long and include at least one uppercase letter, one number, and one special character'
       );
     }
-  
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-  
+
     await this.prisma.user.update({
       where: { email },
       data: { password: hashedPassword },
     });
-  
+
     return { message: 'Password changed successfully' };
-  }  
+  }
 
   async resendOtp(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });

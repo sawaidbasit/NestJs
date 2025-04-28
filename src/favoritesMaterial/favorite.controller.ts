@@ -10,12 +10,16 @@ import {
     InternalServerErrorException,
     Delete,
   } from '@nestjs/common';
+  import { Prisma } from '@prisma/client';
+  import {PrismaService} from "../prisma/prisma.service"
   import { FavoriteService } from './favorite.service';
 
   @Controller('materials/favorites')
 
   export class FavoritesController {
-    constructor(private readonly favoritesService: FavoriteService) {}
+     constructor(private readonly favoritesService: FavoriteService,
+        private readonly prisma: PrismaService
+      ) {}
 
     @Get('all')
     async getFavorites(@Query('userEmail') userEmail: string) {
@@ -39,13 +43,27 @@ import {
       @Body('materialId') materialId: string,
     ) {
 
+      const user = await this.prisma.user.findUnique({
+        where: { email: userEmail },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const storedAccessToken = user.accessToken;
+
+      if (!storedAccessToken) {
+        throw new Error('Access token not found for user');
+      }
+
       if (!userEmail || !materialId) {
         console.log('🔴 Missing required fields!');
         throw new BadRequestException('User email and material ID are required');
       }
 
       try {
-        return await this.favoritesService.addToFavorites(userEmail, materialId);
+        return await this.favoritesService.addToFavorites(userEmail, materialId, storedAccessToken);
       } catch (error) {
         console.error('🔴 Error in addToFavorites:', error.message);
 

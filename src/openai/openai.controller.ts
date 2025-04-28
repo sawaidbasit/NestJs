@@ -6,7 +6,7 @@ import { Prisma } from '@prisma/client';
 @Controller('openai')
 export class OpenAiController {
   constructor(
-    private readonly openAiService: OpenAiService, 
+    private readonly openAiService: OpenAiService,
     private readonly prisma: PrismaService
   ) {}
 
@@ -15,6 +15,13 @@ export class OpenAiController {
     @Body('imageBase64') imageBase64: string,
     @Body('email') email: string,
   ) {
+    if (!imageBase64) {
+      return { statusCode: 400, message: 'Image data is required' };
+    }
+    if (!email) {
+      return { statusCode: 400, message: 'Email is required' };
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { email: email },
     });
@@ -23,15 +30,14 @@ export class OpenAiController {
       throw new NotFoundException('User not found');
     }
 
-    if (!imageBase64) {
-      return { statusCode: 400, message: 'Image data is required' };
-    }
-    if (!email) {
-      return { statusCode: 400, message: 'Email is required' };
+    const storedAccessToken = user.accessToken;
+
+    if (!storedAccessToken) {
+      throw new Error('Access token not found for user');
     }
 
     try {
-      const result = await this.openAiService.analyzeImage(imageBase64, email);
+      const result = await this.openAiService.analyzeImage(imageBase64, email, storedAccessToken);
       return result;
     } catch (error) {
       console.error('❌ Error in analyzeImage:', error.message);
