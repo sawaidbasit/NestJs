@@ -19,7 +19,7 @@ export class FavoriteService {
       throw new Error('Invalid access token');
     }
 
-    if (!user.isPremium) {
+    if (!user.isPremium && user.isTrialLimitExceeded) {
       return { error: 'Access denied. Premium membership required.' };
     }
     try {
@@ -138,6 +138,6 @@ export class FavoriteService {
       throw new HttpException(error.message || 'Failed to fetch favorites', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
-  
+
 
 }

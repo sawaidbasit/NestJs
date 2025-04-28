@@ -57,7 +57,7 @@ export class OpenAiService {
       throw new Error('Invalid access token');
     }
 
-    if (!user.isPremium) {
+    if (!user.isPremium && user.isTrialLimitExceeded) {
       return { error: 'Access denied. Premium membership required.' };
     }
 

@@ -18,6 +18,9 @@ model User {
   createdAt            DateTime        @default(now())
   isVerified           Boolean         @default(false)
   isPremium            Boolean         @default(false)
+  trialStartDate       DateTime?
+  trialEndDate         DateTime?
+  isTrialLimitExceeded Boolean         @default(false)
   otp                  String?
   appleId              String?         @unique
   googleId             String?         @unique

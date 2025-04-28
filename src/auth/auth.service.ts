@@ -79,6 +79,27 @@ export class AuthService {
     }
   }
 
+  @Cron(CronExpression.EVERY_MINUTE)
+  async userLimitExceeded() {
+    const currentTime = new Date();
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        trialEndDate: {
+          lte: currentTime,
+        },
+        isTrialLimitExceeded: false,
+      },
+    });
+
+    for (const user of users) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { isTrialLimitExceeded: true },
+      });
+      console.log(`Trial expired for user ${user.email}`);
+    }
+  }
 
   async signup(name: string, email: string, password: string) {
     if (!name || !email || !password) {
@@ -106,10 +127,12 @@ export class AuthService {
     const accessToken = randomBytes(32).toString('hex');
     const refreshAccessToken = randomBytes(32).toString('hex');
 
-    // const accessToken = crypto.randomBytes(32).toString('hex');
-    const accessTokenExpiredTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 din
 
+    const accessTokenExpiredTime = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    // const trialEndDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const trialEndDate = new Date(Date.now() + 2 * 60 * 1000);
     const otpCreatedAt = new Date();
+    const trialStartDate = new Date();
 
     await this.prisma.user.create({
         data: {
@@ -122,6 +145,9 @@ export class AuthService {
             otp,
             otpCreatedAt,
             isVerified: false,
+            trialStartDate,
+            trialEndDate,
+            isTrialLimitExceeded: false,
         },
     });
 
