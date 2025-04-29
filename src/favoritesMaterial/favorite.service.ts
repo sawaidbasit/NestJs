@@ -1,4 +1,4 @@
-import { Injectable, HttpStatus, HttpException } from '@nestjs/common';
+import { Injectable, HttpStatus, HttpException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service'; // Correct path
 
 @Injectable()
@@ -20,7 +20,7 @@ export class FavoriteService {
     }
 
     if (!user.isPremium && user.isTrialLimitExceeded) {
-      return { error: 'Access denied. Premium membership required.' };
+      throw new ForbiddenException('Access denied. Premium membership required.');
     }
     try {
       console.log(`🟢 Adding to favorites: User(${userEmail}) - Material(${materialId})`);

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
@@ -35,6 +35,10 @@ export class TipsService {
         const userEmail = user.email;
         console.log(`Processing tips for user: ${userEmail}`);
 
+        if (!user.isPremium && user.isTrialLimitExceeded) {
+          throw new ForbiddenException('Access denied. Premium membership required.');
+
+        }
         const topCategories = await this.getTopCategoriesForUser(userEmail);
 
         if (topCategories.length === 0) {
@@ -77,8 +81,8 @@ export class TipsService {
           console.log(
             `✨ Generating new tips for ${userEmail} - ${topCategory}`,
           );
-          const firstTip = await this.generateTip(topCategory, 1);
-          const secondTip = await this.generateTip(topCategory, 2);
+          const firstTip = await this.generateTip(topCategory, 1, userEmail);
+          const secondTip = await this.generateTip(topCategory, 2, userEmail);
 
           const firstImageUrl = await this.generateImage(topCategory);
           const secondImageUrl = await this.generateImage(topCategory);
@@ -134,6 +138,13 @@ export class TipsService {
   }
 
   async getPersonalizedTips(userEmail: string): Promise<any[]> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: userEmail },
+    });
+    if (!user?.isPremium && user?.isTrialLimitExceeded) {
+      throw new ForbiddenException('Access denied. Premium membership required.');
+
+    }
     const topCategories = await this.getTopCategoriesForUser(userEmail);
 
     if (topCategories.length === 0) {
@@ -187,8 +198,8 @@ export class TipsService {
   ): Promise<any[]> {
     try {
       // Generate two tips for the top category
-      const firstTip = await this.generateTip(topCategory, 1);
-      const secondTip = await this.generateTip(topCategory, 2);
+      const firstTip = await this.generateTip(topCategory, 1, userEmail);
+      const secondTip = await this.generateTip(topCategory, 2, userEmail);
 
       // Generate images for each tip
       const firstImageUrl = await this.generateImage(topCategory);
@@ -356,7 +367,16 @@ export class TipsService {
   private async generateTip(
     category: string,
     tipNumber: number,
+    userEmail: string,
   ): Promise<{ title: string; description: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: userEmail },
+    });
+
+    if (!user?.isPremium && user?.isTrialLimitExceeded) {
+      throw new ForbiddenException('Access denied. Premium membership required.');
+    }
+
     const prompt = `
       You are an expert in interior design. Suggest a unique and practical tip specifically for enhancing a "${category}" in a modern home.
 

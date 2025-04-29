@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ImageAnalysisService } from '../image-analysis/image-analysis.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as fs from 'fs';
@@ -58,7 +58,7 @@ export class OpenAiService {
     }
 
     if (!user.isPremium && user.isTrialLimitExceeded) {
-      return { error: 'Access denied. Premium membership required.' };
+      throw new ForbiddenException('Access denied. Premium membership required.');
     }
 
     const payload = {
