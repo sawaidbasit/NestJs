@@ -14,9 +14,16 @@ import { MaterialsController } from './materials/material.controller';
 import { MaterialsModule } from './materials/material.module';
 import { FavoriteModule } from './favoritesMaterial/favorite.module';
 import { TipsModule } from './tips/tips.module';
+import { ConfigModule } from '@nestjs/config';
+import { StripeModule } from './stripe/stripe.module';
+import { StripeController } from './stripe/stripe.controller';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true
+    }),
+    StripeModule,
     HomeModule,
     AuthModule,
     OpenAiModule,
@@ -31,6 +38,6 @@ import { TipsModule } from './tips/tips.module';
       rootPath: join(__dirname, '..', 'client'),
     }),
   ],
-  controllers: [HomeController, OpenAiController, MaterialsController],
+  controllers: [HomeController, OpenAiController, MaterialsController, StripeController],
 })
 export class AppModule {}

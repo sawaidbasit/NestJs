@@ -21,6 +21,10 @@ model User {
   trialStartDate       DateTime?
   trialEndDate         DateTime?
   isTrialLimitExceeded Boolean         @default(false)
+  stripeCustomerId     String?         @unique
+  subscriptionId       String?         @unique
+  subscriptionStatus   String?
+  subscriptionEnd      DateTime?
   otp                  String?
   appleId              String?         @unique
   googleId             String?         @unique
