@@ -9,6 +9,7 @@ import {
     ConflictException,
     InternalServerErrorException,
     Delete,
+    HttpException,
   } from '@nestjs/common';
   import { Prisma } from '@prisma/client';
   import {PrismaService} from "../prisma/prisma.service"
@@ -42,6 +43,10 @@ import {
       @Body('userEmail') userEmail: string,
       @Body('materialId') materialId: string,
     ) {
+      if (!userEmail || !materialId) {
+        console.log('🔴 Missing required fields!');
+        throw new BadRequestException('User email and material ID are required');
+      }
 
       const user = await this.prisma.user.findUnique({
         where: { email: userEmail },
@@ -54,18 +59,17 @@ import {
       const storedAccessToken = user.accessToken;
 
       if (!storedAccessToken) {
-        throw new Error('Access token not found for user');
-      }
-
-      if (!userEmail || !materialId) {
-        console.log('🔴 Missing required fields!');
-        throw new BadRequestException('User email and material ID are required');
+        throw new BadRequestException('Access token not found for user');
       }
 
       try {
         return await this.favoritesService.addToFavorites(userEmail, materialId, storedAccessToken);
       } catch (error) {
         console.error('🔴 Error in addToFavorites:', error.message);
+
+        if (error instanceof HttpException) {
+          throw error;
+        }
 
         if (error.message.includes('User does not exist')) {
           throw new NotFoundException('User not found');

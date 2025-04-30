@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Query, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, NotFoundException, HttpException, ForbiddenException, InternalServerErrorException } from '@nestjs/common';
 import { OpenAiService } from './openai.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -16,10 +16,10 @@ export class OpenAiController {
     @Body('email') email: string,
   ) {
     if (!imageBase64) {
-      return { statusCode: 400, message: 'Image data is required' };
+      throw new HttpException('Image data is required', 400);
     }
     if (!email) {
-      return { statusCode: 400, message: 'Email is required' };
+      throw new HttpException('Email is required', 400);
     }
 
     const user = await this.prisma.user.findUnique({
@@ -33,19 +33,21 @@ export class OpenAiController {
     const storedAccessToken = user.accessToken;
 
     if (!storedAccessToken) {
-      throw new Error('Access token not found for user');
+      throw new ForbiddenException('Access token not found for user');
     }
 
     try {
       const result = await this.openAiService.analyzeImage(imageBase64, email, storedAccessToken);
       return result;
     } catch (error) {
-      console.error('❌ Error in analyzeImage:', error.message);
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('❌ Unexpected error in analyzeImage:', error);
 
-      return {  
-        statusCode: 500,
-        message: 'Something went wrong while processing the image.',
-      };
+      throw new InternalServerErrorException(
+        'Something went wrong while processing the image.',
+      );
     }
   }
 
